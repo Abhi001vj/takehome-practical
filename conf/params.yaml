@@ -38,7 +38,7 @@ tuning:
 train:
   # The candidate evaluated by CI. Change this in a model PR. Selection must use the
   # grouped-CV column of reports/comparison.md, never the naive one.
-  model: embedding_logreg
+  model: multinomial_nb
 
 promotion:
   # CI blocks a merge unless the candidate clears these against the current champion.
