@@ -1,0 +1,10 @@
+{
+  "version": "checked-in-benchmark",
+  "name": "embedding_logreg",
+  "macro_f1": 0.9714073541459672,
+  "critical_recall": 0.945,
+  "macro_f1__std": 0.03807062193632104,
+  "cv_scheme": "grouped",
+  "dataset_rows": 400,
+  "template_groups": 80
+}
