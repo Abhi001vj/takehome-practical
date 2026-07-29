@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "candidate": {
+    "name": "embedding_logreg",
+    "macro_f1": 0.9714073541459672,
+    "critical_recall": 0.945,
+    "macro_f1__std": 0.03807062193632104
+  },
+  "champion": {
+    "version": "4",
+    "run_id": "9dc6098f169a4009b1d4d76640a4fd35",
+    "name": "embedding_logreg",
+    "macro_f1": 0.9714073541459672,
+    "critical_recall": 0.945,
+    "macro_f1__std": 0.03807062193632104
+  },
+  "checks": [
+    {
+      "name": "fraud-report_recall_floor",
+      "passed": true,
+      "detail": "fraud-report recall 0.9450 vs floor 0.8000"
+    },
+    {
+      "name": "champion_non_regression",
+      "passed": true,
+      "detail": "same model macro-F1 0.9714 vs benchmark 0.9714 (delta +0.0000)"
+    },
+    {
+      "name": "no_critical_regression",
+      "passed": true,
+      "detail": "fraud-report recall 0.9450 vs champion 0.9450"
+    },
+    {
+      "name": "variance_not_inflated",
+      "passed": true,
+      "detail": "macro-F1 std 0.0381 vs champion 0.0381 (ratio 1.00, max 1.50)"
+    }
+  ],
+  "policy": {
+    "primary_metric": "macro_f1",
+    "min_improvement": 0.005,
+    "critical_recall_floor": 0.8,
+    "max_std_ratio": 1.5,
+    "registered_model_name": "support-router"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "model_path": "artifacts",
+  "sample_size": 60,
+  "batch_repeats": 5,
+  "warmup_seconds": 3.734384040988516,
+  "median_ms": 7.742666493868455,
+  "mean_ms": 7.869712517519171,
+  "p95_ms": 9.081171169236766,
+  "max_ms": 10.70212500053458,
+  "throughput_per_second": 127.06944475720665,
+  "batch_seconds": 0.37702479102881625,
+  "batch_throughput_per_second": 795.7036437348514,
+  "python": "3.11.4",
+  "platform": "macOS-27.0-arm64-arm-64bit"
+}

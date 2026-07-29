@@ -1,0 +1,463 @@
+{
+  "n_rows": 400,
+  "n_duplicate_texts": 0,
+  "n_normalised_forms": 172,
+  "n_template_groups": 80,
+  "largest_template_group": 14,
+  "template_compression": 0.8,
+  "grouping_summary": "400 rows -> 172 normalised forms -> 80 groups after similarity merge (largest group 14 rows, 80.0% of rows are template repeats)",
+  "row_counts": {
+    "account-access": 100,
+    "transaction-dispute": 90,
+    "fraud-report": 50,
+    "general": 160
+  },
+  "template_counts": {
+    "account-access": 24,
+    "transaction-dispute": 15,
+    "fraud-report": 18,
+    "general": 23
+  },
+  "row_imbalance_ratio": 3.2,
+  "template_imbalance_ratio": 1.6,
+  "length_words": {
+    "min": 8,
+    "median": 16.0,
+    "mean": 15.6625,
+    "max": 24
+  },
+  "length_chars": {
+    "min": 42,
+    "median": 88.0,
+    "max": 128
+  },
+  "per_class_lengths": {
+    "account-access": {
+      "mean_words": 17.29,
+      "median_words": 17.0,
+      "min_words": 11,
+      "max_words": 24
+    },
+    "transaction-dispute": {
+      "mean_words": 18.155555555555555,
+      "median_words": 18.0,
+      "min_words": 14,
+      "max_words": 22
+    },
+    "fraud-report": {
+      "mean_words": 16.86,
+      "median_words": 17.0,
+      "min_words": 13,
+      "max_words": 21
+    },
+    "general": {
+      "mean_words": 12.86875,
+      "median_words": 13.0,
+      "min_words": 8,
+      "max_words": 18
+    }
+  },
+  "opener_by_label": {
+    "Quick question": {
+      "account-access": 16,
+      "transaction-dispute": 11,
+      "fraud-report": 7,
+      "general": 21
+    },
+    "Hello team": {
+      "account-access": 11,
+      "transaction-dispute": 9,
+      "fraud-report": 8,
+      "general": 17
+    },
+    "Please help": {
+      "account-access": 15,
+      "transaction-dispute": 11,
+      "fraud-report": 8,
+      "general": 21
+    },
+    "Report fraud": {
+      "account-access": 0,
+      "transaction-dispute": 0,
+      "fraud-report": 1,
+      "general": 0
+    },
+    "Urgent": {
+      "account-access": 9,
+      "transaction-dispute": 7,
+      "fraud-report": 5,
+      "general": 17
+    },
+    "Hi": {
+      "account-access": 7,
+      "transaction-dispute": 8,
+      "fraud-report": 7,
+      "general": 25
+    },
+    "Hey": {
+      "account-access": 11,
+      "transaction-dispute": 13,
+      "fraud-report": 5,
+      "general": 16
+    },
+    "(none)": {
+      "account-access": 31,
+      "transaction-dispute": 31,
+      "fraud-report": 9,
+      "general": 43
+    }
+  },
+  "vocabulary_size": 303,
+  "top_terms_overall": [
+    [
+      "account",
+      71
+    ],
+    [
+      "time",
+      68
+    ],
+    [
+      "sensitive",
+      68
+    ],
+    [
+      "app",
+      38
+    ],
+    [
+      "login",
+      37
+    ],
+    [
+      "never",
+      36
+    ],
+    [
+      "buy",
+      35
+    ],
+    [
+      "transaction",
+      32
+    ],
+    [
+      "order",
+      31
+    ],
+    [
+      "can't",
+      30
+    ],
+    [
+      "need",
+      28
+    ],
+    [
+      "amount",
+      28
+    ],
+    [
+      "don't",
+      26
+    ],
+    [
+      "refund",
+      26
+    ],
+    [
+      "code",
+      25
+    ],
+    [
+      "out",
+      25
+    ],
+    [
+      "reset",
+      24
+    ],
+    [
+      "get",
+      24
+    ],
+    [
+      "password",
+      23
+    ],
+    [
+      "price",
+      23
+    ],
+    [
+      "shows",
+      22
+    ],
+    [
+      "access",
+      22
+    ],
+    [
+      "want",
+      22
+    ],
+    [
+      "two",
+      22
+    ],
+    [
+      "sol",
+      21
+    ]
+  ],
+  "distinctive_terms": {
+    "account-access": [
+      [
+        "can't",
+        30,
+        3.27
+      ],
+      [
+        "reset",
+        24,
+        3.27
+      ],
+      [
+        "password",
+        23,
+        3.27
+      ],
+      [
+        "access",
+        22,
+        3.27
+      ],
+      [
+        "working",
+        19,
+        3.27
+      ],
+      [
+        "verification",
+        17,
+        3.27
+      ],
+      [
+        "keeps",
+        16,
+        3.27
+      ],
+      [
+        "i'm",
+        14,
+        3.27
+      ],
+      [
+        "log",
+        13,
+        3.27
+      ],
+      [
+        "lost",
+        12,
+        3.27
+      ],
+      [
+        "factor",
+        12,
+        3.27
+      ],
+      [
+        "authentication",
+        12,
+        3.27
+      ]
+    ],
+    "transaction-dispute": [
+      [
+        "refund",
+        26,
+        3.81
+      ],
+      [
+        "want",
+        22,
+        3.81
+      ],
+      [
+        "twice",
+        17,
+        3.81
+      ],
+      [
+        "confirmed",
+        14,
+        3.81
+      ],
+      [
+        "already",
+        14,
+        3.81
+      ],
+      [
+        "purchase",
+        13,
+        3.81
+      ],
+      [
+        "fee",
+        12,
+        3.81
+      ],
+      [
+        "charged",
+        12,
+        3.81
+      ],
+      [
+        "pending",
+        10,
+        3.81
+      ],
+      [
+        "left",
+        10,
+        3.81
+      ],
+      [
+        "history",
+        8,
+        3.81
+      ],
+      [
+        "totals",
+        8,
+        3.81
+      ]
+    ],
+    "fraud-report": [
+      [
+        "someone",
+        14,
+        7.91
+      ],
+      [
+        "fraud",
+        7,
+        7.91
+      ],
+      [
+        "think",
+        7,
+        7.91
+      ],
+      [
+        "recognize",
+        6,
+        7.91
+      ],
+      [
+        "money",
+        6,
+        7.91
+      ],
+      [
+        "moved",
+        6,
+        7.91
+      ],
+      [
+        "withdrew",
+        5,
+        7.91
+      ],
+      [
+        "authorized",
+        5,
+        7.91
+      ],
+      [
+        "unauthorized",
+        5,
+        7.91
+      ],
+      [
+        "phishing",
+        4,
+        7.91
+      ],
+      [
+        "pretending",
+        4,
+        7.91
+      ],
+      [
+        "may",
+        4,
+        7.91
+      ]
+    ],
+    "general": [
+      [
+        "where",
+        21,
+        3.28
+      ],
+      [
+        "what's",
+        20,
+        3.28
+      ],
+      [
+        "fees",
+        20,
+        3.28
+      ],
+      [
+        "documents",
+        18,
+        3.28
+      ],
+      [
+        "minimum",
+        14,
+        3.28
+      ],
+      [
+        "explain",
+        14,
+        3.28
+      ],
+      [
+        "move",
+        14,
+        3.28
+      ],
+      [
+        "external",
+        14,
+        3.28
+      ],
+      [
+        "started",
+        13,
+        3.28
+      ],
+      [
+        "long",
+        12,
+        3.28
+      ],
+      [
+        "withdrawals",
+        12,
+        3.28
+      ],
+      [
+        "usually",
+        12,
+        3.28
+      ]
+    ]
+  }
+}
