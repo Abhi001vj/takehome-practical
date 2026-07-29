@@ -347,7 +347,8 @@ With more time, the priorities would be real-ticket validation, probability cali
 targeted labeling around the fraud/dispute boundary, drift monitoring, and a shadow-mode
 deployment before automated routing.
 
-The complete practice build took approximately **10–12 focused hours**. Under a strict
-three-hour budget, the stopping point would be grouped evaluation, TF-IDF linear
+Active hands-on work took approximately **3–5 focused hours**, using AI assistance as
+permitted by the brief; longer training and experiment runs completed unattended. Under a
+strict three-hour budget, the stopping point would be grouped evaluation, TF-IDF linear
 baselines, the prediction and batch-scoring interfaces, validation, tests, and a concise
 decision note.

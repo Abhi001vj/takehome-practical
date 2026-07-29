@@ -112,7 +112,7 @@ Deliberately left out: transformer fine-tuning on only 80 independent templates,
 
 With more time: collect genuine tickets, calibrate confidence thresholds, add a human-review path for uncertain or high-risk decisions, monitor drift by route and confidence, and target labeling at the fraud/dispute boundary.
 
-The complete practice build took approximately **10–12 focused hours**. A strict three-hour version would stop after grouped CV, TF-IDF linear baselines, the prediction/batch-scoring interfaces, validation, and tests.
+Active hands-on work took approximately **3–5 focused hours**, using AI assistance as permitted by the brief; longer training and experiment runs completed unattended. A strict three-hour version would stop after grouped CV, TF-IDF linear baselines, the prediction/batch-scoring interfaces, validation, and tests.
 
 ## Required reasoning questions
 
