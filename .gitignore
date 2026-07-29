@@ -21,6 +21,10 @@ mlflow.db
 # Trained model artifacts remain local. Reproducible reports are committed.
 artifacts/
 
+# Holdout scorer outputs are generated locally for each evaluation dataset.
+predictions*.csv
+predictions*.metrics.json
+
 /data/interim/
 /data/processed/
 

@@ -10,6 +10,21 @@ row-level split puts a template sibling in training for 95.8% of validation rows
 selection therefore uses repeated stratified group cross-validation. The naive split is
 retained only to make the leakage gap visible.
 
+## Exercise requirements and evidence
+
+| requirement | implementation | how to verify |
+|---|---|---|
+| Four-route classifier | Classical TF-IDF baselines, linear models, Naive Bayes, trees, frozen-embedding heads, and direct Qwen comparisons all implement the same four-label interface. | `uv run support-router cv --models logistic_regression --schemes grouped` |
+| Proper evaluation | Five-fold stratified group CV, repeated four times, keeps all members of a near-duplicate template family in one fold. Row-level CV is reported only as a leakage diagnostic. | `uv run support-router leakage`; see [reports/comparison.md](reports/comparison.md) |
+| Imbalance decision and justified metric | Macro-F1 is the selection metric, `fraud-report` recall is a separate guardrail, and supported linear models use balanced class weights. Text resampling was deliberately avoided. | See [Metric and imbalance policy](#metric-and-imbalance-policy) and [reports/REPORT.md](reports/REPORT.md) |
+| Clean, tested Python and validation | Shared validation rejects missing, non-string, too-short, and oversized messages. The same inference implementation is used by Python, CLI, batch scoring, and API. | `uv run ruff check .`; `uv run pytest -q` (107 tests) |
+| `predict(text) -> label` | `support_router.inference.predict` and the `support-router predict` CLI load the persisted artifact. | See [Inference model selection](#inference-model-selection) |
+| Holdout scoring | The scorer reads a CSV, preserves row order, writes predictions, optionally writes confidence, and separates invalid rows. | `uv run support-router score holdout.csv --output predictions.csv --confidence` |
+| Optional LLM comparison | Qwen 2.5 1.5B zero-shot and few-shot routes are evaluated through an OpenAI-compatible endpoint with output validation and parse-failure accounting. | See [Direct Qwen comparison](#direct-qwen-comparison) |
+| Optional API | FastAPI provides single and batch prediction, health, model information, validation, and OpenAPI documentation. | See [Run and test the API](#run-and-test-the-api) |
+| Optional containerization and CI | Compose packages training/API serving and optional NVIDIA vLLM; GitHub Actions runs lint, tests, evaluation, a promotion gate, and uploads reports. | See [Containers and CI](#containers-and-ci) |
+| Scope and trade-offs | Priorities, exclusions, next steps, and the honest time spent are stated explicitly. | See [Scope and trade-offs](#scope-and-trade-offs) |
+
 ## Results
 
 The selected model is a frozen MiniLM sentence encoder with a class-weighted logistic
@@ -62,7 +77,47 @@ promotion gate, and generates the consolidated report. The frozen encoder downlo
 from Hugging Face; use `logistic_regression` for the fully self-contained classical path.
 Detailed stage-by-stage commands are in [COMMANDS.md](COMMANDS.md).
 
-## Prediction interfaces
+## Prediction and holdout interfaces
+
+### Inference model selection
+
+The default inference model is the artifact at `artifacts/model.joblib`. The committed
+results select `embedding_logreg`: frozen
+`sentence-transformers/all-MiniLM-L6-v2` embeddings followed by a class-weighted logistic
+regression head. Confirm exactly what will be served with:
+
+```bash
+uv run support-router info
+```
+
+Training without `--out` replaces the default artifact. To compare or serve another model
+without overwriting it, train into a named directory and pass that directory explicitly:
+
+```bash
+# Default selected model
+uv run support-router train --model embedding_logreg
+
+# Alternative classical model in its own artifact directory
+uv run support-router train \
+  --model logistic_regression \
+  --out artifacts/logistic_regression
+
+uv run support-router info --model-path artifacts/logistic_regression
+uv run support-router predict \
+  "I cannot access my account" \
+  --model-path artifacts/logistic_regression \
+  --scores
+uv run support-router score holdout.csv \
+  --output predictions-logistic.csv \
+  --model-path artifacts/logistic_regression \
+  --confidence
+```
+
+The MLflow `champion` alias records the reviewed release decision, but local inference does
+not silently download that alias. Deployment selects a concrete, tested artifact directory,
+which prevents the model changing underneath a running service.
+
+### Single-message prediction
 
 Train the chosen model and classify one message:
 
@@ -81,6 +136,11 @@ from support_router.inference import predict
 label = predict("I cannot access my account after changing phones")
 ```
 
+The return value is the label by default. Pass `with_scores=True` to receive the label,
+confidence, and per-class scores when the selected estimator exposes probabilities.
+
+### Holdout CSV scoring
+
 The holdout-scoring entry point preserves input order and writes one prediction per valid
 row:
 
@@ -90,9 +150,40 @@ uv run support-router score holdout.csv \
   --confidence
 ```
 
-Start the optional HTTP service with `uv run support-router serve`. Its OpenAPI UI is at
-<http://127.0.0.1:8000/docs>, with `POST /predict`, `POST /predict/batch`, `GET /health`,
-and `GET /info` endpoints.
+The input must contain a `text` column (or use `--text-column`). If a `label` column is
+present, the command additionally prints evaluation metrics; scoring `data/raw/train.csv`
+therefore produces an in-sample sanity check, not a holdout estimate. The grouped-CV result
+above is the honest model-selection evidence.
+
+### Run and test the API
+
+Start the service after training an artifact:
+
+```bash
+uv run support-router train --model embedding_logreg
+uv run support-router serve
+```
+
+In another terminal:
+
+```bash
+curl -fsS http://127.0.0.1:8000/health
+curl -fsS http://127.0.0.1:8000/info
+curl -fsS \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Someone transferred ETH without my permission"}' \
+  http://127.0.0.1:8000/predict
+```
+
+The interactive OpenAPI UI is at <http://127.0.0.1:8000/docs>. To serve a different
+artifact without changing code:
+
+```bash
+SUPPORT_ROUTER_MODEL_DIR=artifacts/logistic_regression \
+  uv run support-router serve --port 8001
+```
+
+Run the API-specific tests with `uv run pytest -q tests/test_api.py`.
 
 ## Local MLflow tracking
 
@@ -126,6 +217,33 @@ gate have been reviewed, move the alias explicitly with
 Local tracking state (`mlflow.db` and `mlruns/`) is intentionally ignored by git; the
 reproducible report and comparison artifacts are committed instead.
 
+## Containers and CI
+
+Containers are optional; local Python commands are the primary experiment path. Validate
+and start the training-dependent API service with:
+
+```bash
+docker compose -f docker/docker-compose.yml config --quiet
+docker compose -f docker/docker-compose.yml up --build api
+```
+
+The `trainer` service completes first and writes the selected artifact into a shared volume;
+the API starts only after training succeeds. Test it at <http://127.0.0.1:8000/docs> or with
+the same `curl` requests shown above, then stop it with:
+
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
+The Compose configuration and local API behavior were verified; the optional vLLM container
+was not run on Apple Silicon because it targets a Linux host with an NVIDIA GPU.
+
+On pull requests, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs lint and tests,
+regenerates evaluation evidence, applies the macro-F1/fraud-recall promotion policy, uploads
+the reports and plots, and comments the gate result on the PR. A passing candidate must
+reproduce the champion or clear the configured improvement margin without regressing fraud
+recall or inflating fold variance.
+
 ## Direct Qwen comparison
 
 On Apple Silicon, the evaluated Qwen 2.5 1.5B Instruct model runs through Ollama's Metal
@@ -149,6 +267,18 @@ uv run support-router cv \
   --append \
   --track
 ```
+
+Each response is parsed and checked against the four allowed routes before it is scored.
+Measured grouped-CV results were:
+
+| approach | macro-F1 | `fraud-report` recall | invalid responses |
+|---|---:|---:|---:|
+| Qwen zero-shot | 0.762 | 0.840 | 0 / 1,600 |
+| Qwen few-shot | 0.706 | 0.925 | 21 / 1,600 (1.3%) |
+
+The LLM was strong on the three concrete problem routes but weak on negatively defined
+`general` messages. It was retained as a comparison, not selected for default inference;
+the frozen-embedding linear head was both more accurate and cheaper to serve.
 
 The optional Docker vLLM service targets Linux with an NVIDIA GPU. It is not the local
 Apple Silicon path. Both servers expose the same OpenAI-compatible interface, so the
