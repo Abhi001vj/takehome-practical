@@ -1,0 +1,64 @@
+# Serving image: the trained artifact behind FastAPI.
+#
+# Two-stage so the runtime image carries no build toolchain and no uv. The heavy
+# optional extras (trees, tracking) are deliberately NOT installed here: serving needs
+# the base deps plus `api`, and - if the champion is an embedding model - `llm`. Keeping
+# lightgbm/catboost/mlflow out of the serving image is the difference between ~400MB and
+# ~2GB.
+#
+# Build with the repo root as context:
+#     docker build -f docker/Dockerfile.api -t support-router-api .
+
+FROM python:3.12-slim AS builder
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /build
+
+# Copy only what the build backend needs to resolve, so dependency layers cache
+# independently of source edits.
+COPY pyproject.toml README.md ./
+COPY src ./src
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install torch from the CPU index first. Using it only as an extra index would still let
+# pip choose a newer CUDA build from PyPI.
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch
+RUN pip install ".[api,llm]"
+
+
+FROM python:3.12-slim AS runtime
+
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    SUPPORT_ROUTER_MODEL_DIR=/app/artifacts \
+    # Keep the sentence-transformers cache inside the image/volume rather than in a
+    # home directory that does not exist for the unprivileged user.
+    HF_HOME=/app/.cache/huggingface \
+    OMP_NUM_THREADS=1
+
+COPY --from=builder /opt/venv /opt/venv
+
+WORKDIR /app
+
+# Non-root: the container only ever reads the model and writes nothing.
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /app/artifacts /app/.cache/huggingface \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8000
+
+# Matches the API's own readiness semantics: /health reports degraded (but 200) when no
+# artifact is present, so this probe checks the field rather than just the status code.
+HEALTHCHECK --interval=15s --timeout=5s --start-period=40s --retries=5 \
+    CMD python -c "import json,urllib.request,sys; \
+r=json.load(urllib.request.urlopen('http://localhost:8000/health')); \
+sys.exit(0 if r['model_loaded'] else 1)"
+
+CMD ["uvicorn", "support_router.api.service:app", "--host", "0.0.0.0", "--port", "8000"]

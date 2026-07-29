@@ -1,0 +1,41 @@
+# Training / evaluation / reporting image.
+#
+# Unlike the serving image this one installs everything: trees, tracking, eda, llm and
+# dev. It is the image CI runs, so it must be able to execute the test suite, the full
+# model comparison, the EDA report and the promotion gate.
+#
+# Single-stage on purpose: the build toolchain is needed anyway (catboost and lightgbm
+# both compile on some platforms), and image size does not matter for a job that runs to
+# completion and exits.
+#
+#     docker build -f docker/Dockerfile.train -t support-router-train .
+
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/app/.cache/huggingface \
+    MPLBACKEND=Agg
+
+# libgomp1: OpenMP runtime that lightgbm and xgboost link against - the slim image does
+# not ship it and the import fails at runtime rather than at install time.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY pyproject.toml README.md ./
+COPY src ./src
+
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch
+RUN pip install ".[trees,tracking,api,eda,llm,dev]"
+
+COPY conf ./conf
+COPY data ./data
+COPY tests ./tests
+COPY scripts ./scripts
+
+# Default: the whole pipeline CI cares about - tests, then comparison, then gate.
+CMD ["bash", "scripts/ci_pipeline.sh"]

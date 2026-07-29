@@ -1,0 +1,101 @@
+# Optional containerized training, serving, and Linux/NVIDIA LLM inference.
+#
+# Run from the repo root:
+#     docker compose -f docker/docker-compose.yml up api
+#
+# Service dependencies encode the real ordering constraint: `api` needs an artifact, and
+# `trainer` is what produces one. They share the `artifacts` volume, and `api` waits for
+# `trainer` to exit successfully (`service_completed_successfully`) rather than merely to
+# start - otherwise the API would boot into its degraded no-model state and stay there.
+#
+# The `vllm` service is in the `llm` profile because it wants a GPU and a multi-GB model
+# download. Nothing in the default path needs it: the embedding arm runs MiniLM locally
+# on CPU, and only the *generative* arms (llm_zero_shot / llm_few_shot) call vLLM.
+
+name: support-router
+
+volumes:
+  artifacts:
+  hf-cache:
+
+services:
+  # ---------------------------------------------------------------- LLM inference
+  # Only needed for the generative arms. `docker compose --profile llm up vllm`.
+  vllm:
+    image: vllm/vllm-openai:v0.6.3
+    profiles: ["llm"]
+    command: >
+      --model ${VLLM_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}
+      --max-model-len 2048
+      --gpu-memory-utilization 0.85
+      --port 8000
+    ports:
+      - "8001:8000"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      # /health is vLLM's own readiness endpoint; it stays 503 until weights are loaded,
+      # which on a cold cache is a multi-minute download - hence the long start_period.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 600s
+
+  # ---------------------------------------------------------------- train + evaluate
+  # Runs to completion and exits. Writes model.joblib into the shared artifacts volume.
+  # MLflow is intentionally local-first and is started on the host when tracking is wanted.
+  trainer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    environment:
+      SUPPORT_ROUTER_MODEL_DIR: /app/artifacts
+      LLM_BASE_URL: http://vllm:8000/v1
+    volumes:
+      - artifacts:/app/artifacts
+      - hf-cache:/app/.cache/huggingface
+      - ../reports:/app/reports
+    command: >
+      support-router experiment
+      --models all,embedding_logreg,embedding_lightgbm
+      --no-track
+
+  # ---------------------------------------------------------------- CI job
+  # Tests + comparison + promotion gate. Exits non-zero if the gate rejects, which is
+  # what makes it usable as a required status check on a PR.
+  ci:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    profiles: ["ci"]
+    volumes:
+      - artifacts:/app/artifacts
+      - ../reports:/app/reports
+    command: ["bash", "scripts/ci_pipeline.sh"]
+
+  # ---------------------------------------------------------------- serving
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      SUPPORT_ROUTER_MODEL_DIR: /app/artifacts
+    volumes:
+      - artifacts:/app/artifacts:ro
+      - hf-cache:/app/.cache/huggingface
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+    restart: unless-stopped
