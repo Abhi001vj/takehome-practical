@@ -18,6 +18,13 @@ _CACHE: dict[tuple[str, str], np.ndarray] = {}
 _MODELS: dict[str, object] = {}
 
 
+def clear_embedding_cache(drop_encoder: bool = False) -> None:
+    """Clear cached text vectors while optionally retaining the loaded encoder."""
+    _CACHE.clear()
+    if drop_encoder:
+        _MODELS.clear()
+
+
 def _text_key(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()
 

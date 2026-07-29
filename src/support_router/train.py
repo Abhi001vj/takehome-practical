@@ -139,7 +139,15 @@ def train(
             import mlflow
 
             if mlflow.active_run() is not None:
-                mlflow.log_params({"model": model, **_jsonable(kwargs)})
+                mlflow.log_params(
+                    {
+                        "model": model,
+                        **{
+                            f"p_{key}": value
+                            for key, value in _jsonable(kwargs).items()
+                        },
+                    }
+                )
                 if metrics_path is not None and not evaluate:
                     mlflow.log_param("evaluation_source", Path(metrics_path).name)
                     mlflow.set_tag("evaluation_reused", "true")

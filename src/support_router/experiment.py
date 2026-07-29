@@ -116,6 +116,10 @@ def run_comparison(
 
             trace_llm = tracking_enabled and name.startswith("llm_")
             if trace_llm:
+                # A full repeated-CV sweep can emit thousands of request traces before
+                # the asynchronous exporter drains its default queue.
+                os.environ.setdefault("MLFLOW_ASYNC_TRACE_LOGGING_MAX_QUEUE_SIZE", "10000")
+                os.environ.setdefault("MLFLOW_ASYNC_TRACE_LOGGING_MAX_WORKERS", "4")
                 setup()
                 import mlflow.openai
 

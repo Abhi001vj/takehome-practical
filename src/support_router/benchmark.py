@@ -15,6 +15,13 @@ from .data import load_training_data
 from .inference import load_model, predict, predict_batch, reset_cache
 
 
+def _clear_embedding_vectors() -> None:
+    """Remove exact-text cache hits without unloading the warmed encoder."""
+    from .models.embeddings import clear_embedding_cache
+
+    clear_embedding_cache()
+
+
 def benchmark_inference(
     model_path: Path | None = None,
     out_path: Path | None = None,
@@ -42,16 +49,19 @@ def benchmark_inference(
     predict(texts[0], model_path=directory)
     warmup_seconds = time.perf_counter() - started
 
+    _clear_embedding_vectors()
     samples_ms: list[float] = []
     for text in texts:
         started = time.perf_counter()
         predict(text, model_path=directory)
         samples_ms.append((time.perf_counter() - started) * 1000)
 
-    batch_started = time.perf_counter()
+    batch_seconds = 0.0
     for _ in range(batch_repeats):
+        _clear_embedding_vectors()
+        batch_started = time.perf_counter()
         predict_batch(texts, model_path=directory)
-    batch_seconds = time.perf_counter() - batch_started
+        batch_seconds += time.perf_counter() - batch_started
 
     mean_ms = float(np.mean(samples_ms))
     result = {

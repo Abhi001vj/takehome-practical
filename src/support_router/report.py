@@ -232,7 +232,12 @@ def generate_report(out_path: Path | None = None) -> Path:
     ]
     for version in sorted(tracking.get("versions", []), key=lambda row: int(row["version"])):
         description = version["description"] or "model artifact"
-        model_name = version.get("model") or description.split(":", 1)[0]
+        described_model = description.split(":", 1)[0]
+        model_name = (
+            described_model
+            if described_model.startswith(("embedding_", "llm_"))
+            else version.get("model") or described_model
+        )
         role = (
             "champion"
             if version["version"] == tracking.get("champion_version")

@@ -164,10 +164,9 @@ def log_dataset(path: Path, name: str = "train") -> None:
             source = str(resolved.relative_to(PROJECT_ROOT.resolve()))
         except ValueError:
             source = resolved.name
-        dataset = mlflow.data.from_pandas(
-            pd.read_csv(path), source=source, name=name, targets="label"
-        )
+        dataset = mlflow.data.from_pandas(pd.read_csv(path), name=name, targets="label")
         mlflow.log_input(dataset, context="training")
+        mlflow.set_tag("dataset_path", source)
     except Exception as exc:  # pragma: no cover - lineage is best-effort, never fatal
         mlflow.set_tag("dataset_logging_error", str(exc))
 
