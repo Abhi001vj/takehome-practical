@@ -40,6 +40,10 @@ class TestValidateText:
         with pytest.raises(DataValidationError, match="limit"):
             validate_text("x " * MAX_TEXT_CHARS)
 
+    def test_accepts_exact_maximum_length(self):
+        text = "x" * MAX_TEXT_CHARS
+        assert validate_text(text) == text
+
     def test_accepts_a_realistic_message(self):
         text = "Hello team, The app won't let me sign in, it just spins. Thanks."
         assert validate_text(text) == text
