@@ -1,0 +1,67 @@
+# Experiment and promotion settings shared by the CLI and CI.
+
+seed: 20260728
+
+grouping:
+  # Near-duplicate clustering that defines CV groups. See src/support_router/grouping.py.
+  # Cosine similarity on char n-grams; pairs at or above this threshold are pulled into
+  # the same group, so template siblings cannot straddle a fold boundary.
+  similarity_threshold: 0.85
+  char_ngram_range: [3, 5]
+
+cv:
+  n_splits: 5
+  n_repeats: 4          # repeated CV: 400 rows means a single split is noisy
+  # "grouped" is the honest estimator. "naive" is kept so the leakage gap can be
+  # measured and reported rather than asserted.
+  schemes: [grouped, naive]
+
+features:
+  word:
+    ngram_range: [1, 2]
+    min_df: 2
+    sublinear_tf: true
+    strip_accents: unicode
+  char:
+    analyzer: char_wb
+    ngram_range: [3, 5]
+    min_df: 2
+    sublinear_tf: true
+
+tuning:
+  n_trials: 40
+  timeout_seconds: 900
+  # Optuna optimises the same metric the promotion gate reads, so tuning cannot
+  # win on a metric nobody is graded on.
+  objective: macro_f1
+
+train:
+  # The candidate evaluated by CI. Change this in a model PR. Selection must use the
+  # grouped-CV column of reports/comparison.md, never the naive one.
+  model: embedding_logreg
+
+promotion:
+  # CI blocks a merge unless the candidate clears these against the current champion.
+  primary_metric: macro_f1
+  # Minimum practical improvement for a different model. This is a release-policy
+  # threshold, not a statistical significance claim; fold variance is checked separately.
+  min_improvement: 0.005
+  # A macro-F1 win that comes at the cost of fraud recall is not a win.
+  critical_recall_floor: 0.80
+  # Reject a candidate whose CV variance is so wide the improvement is not real.
+  max_std_ratio: 1.5
+  registered_model_name: support-router
+
+llm:
+  # Small models by design: this is a 4-class routing problem over 16-word messages,
+  # not a reasoning task. See README "LLM approaches".
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  generative_model: qwen2.5:1.5b-instruct
+  # OpenAI-compatible endpoint. Results in reports/ were produced against Ollama on
+  # Apple silicon (port 11434); docker-compose serves the same model through vLLM on
+  # 8001 for Linux/GPU. Either works unchanged - LLM_BASE_URL and LLM_MODEL override.
+  base_url: http://localhost:11434/v1
+  api_key_env: LLM_API_KEY
+  max_concurrency: 8
+  request_timeout: 30
+  temperature: 0.0

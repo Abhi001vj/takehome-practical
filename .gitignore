@@ -1,0 +1,32 @@
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# MLflow local backend store + artifacts
+mlruns/
+mlartifacts/
+mlflow.db
+
+# Optuna
+*.optuna.db
+
+# Trained model artifacts remain local. Reproducible reports are committed.
+artifacts/
+
+/data/interim/
+/data/processed/
+
+.DS_Store
+.env
+
+# The exercise brief is an input to the work, not part of the submission.
+ML_Practical_Brief.pdf
+.dvc/
