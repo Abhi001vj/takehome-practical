@@ -56,7 +56,7 @@ def build_logistic_regression(
     use_char: bool = True,
     **_: object,
 ) -> Pipeline:
-    """TF-IDF + multinomial logistic regression - the brief's suggested baseline.
+    """TF-IDF with multinomial logistic regression.
 
     `class_weight="balanced"` is the default but is exposed so the ablation in the
     report can show what it actually buys. On this dataset the row-level imbalance is
@@ -169,7 +169,7 @@ def build_sgd(
 
     `modified_huber` rather than `hinge` specifically because it is the one SGD loss that
     supports `predict_proba`, which the API needs for a confidence score. It is also the
-    model that would scale to the 10k requests/minute case in the brief: partial_fit
+    model for high-throughput workloads: partial_fit
     allows online updates without a full retrain.
     """
     return Pipeline(

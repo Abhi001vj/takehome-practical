@@ -104,7 +104,7 @@ def load_messages_for_scoring(
         raise DataValidationError(f"input file not found: {path}")
 
     # skip_blank_lines=False is load-bearing: pandas drops wholly-empty rows by default,
-    # which would shrink a graded submission and silently misalign every row after the
+    # which would shrink the output and silently misalign every row after the
     # gap. An empty row must survive to be reported as a reject.
     df = pd.read_csv(path, skip_blank_lines=False)
     if text_column not in df.columns:

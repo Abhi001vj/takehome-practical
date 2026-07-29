@@ -1,20 +1,4 @@
-"""Optuna hyperparameter search, logged to MLflow.
-
-Two rules this module enforces, both of which are easy to get wrong:
-
-1. **Tune on the grouped folds.** Tuning against the naive split would optimise the
-   hyperparameters for memorising templates - the search would happily pick a
-   high-capacity configuration because leakage rewards it.
-
-2. **Optimise the metric the gate reads.** The objective is macro-F1, the same metric the
-   promotion gate compares. A tuner optimising accuracy while the gate reads macro-F1
-   produces models that get rejected for reasons the tuner never saw.
-
-Search spaces are deliberately narrow. With ~80 independent groups, a wide search over
-400 trials would find a configuration that fits the CV folds rather than the problem;
-the number of effective samples does not support fine-grained tuning, and saying so is
-more useful than a large trial count.
-"""
+"""Optuna searches over grouped folds using the configured promotion metric."""
 
 from __future__ import annotations
 

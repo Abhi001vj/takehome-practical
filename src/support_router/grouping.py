@@ -99,7 +99,7 @@ class _UnionFind:
 
 @dataclass(frozen=True)
 class GroupingResult:
-    """Group assignment plus the diagnostics needed to justify it in a review."""
+    """Group assignments and clustering diagnostics."""
 
     groups: np.ndarray
     n_rows: int
